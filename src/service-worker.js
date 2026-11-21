@@ -37,6 +37,7 @@ const CONTENT_SCRIPT_FILES = [
   'i18n.js',
   'utils/promptInsertUtils.js',
   'handlers/inputBoxHandler.js',
+  'handlers/slashCommandPicker.js',
   'content.styles.js',
   'content.shared.js',
   'content.js',

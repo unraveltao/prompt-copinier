@@ -766,6 +766,7 @@ class PromptStorageManager {
     // COMMENT: Build a thin adapter to keep current call-sites unchanged
     this.__ps = {
       getPrompts: mod.getPrompts,
+      getFolders: mod.getFolders,
       setPrompts: mod.setPrompts,
       savePrompt: mod.savePrompt,
       updatePrompt: mod.updatePrompt,
@@ -779,6 +780,11 @@ class PromptStorageManager {
   static async getPrompts() {
     const ps = await this._ps();
     return await ps.getPrompts();
+  }
+
+  static async getFolders() {
+    const ps = await this._ps();
+    return await ps.getFolders();
   }
 
   static async savePrompt(prompt) {
@@ -2295,7 +2301,7 @@ const PromptMediator = (() => {
    * COMMENT: Main prompt selection handler reused across listeners.
    * @param {Prompt} prompt
    */
-  const handlePromptSelect = async (prompt, { waitMs = 10000 } = {}) => {
+  const handlePromptSelect = async (prompt, { waitMs = 10000, insertionContext = null } = {}) => {
     // COMMENT: Ignore duplicate click/keyboard fires that would insert the same prompt twice
     const selectKey = prompt?.uuid || prompt?.content || '';
     const now = Date.now();
@@ -2322,9 +2328,11 @@ const PromptMediator = (() => {
     const vars = processor.extractVariables(prompt.content);
     const listEl = qs(`#${SELECTORS.PROMPT_LIST}`);
     if (vars.length === 0) {
-      const inserted = await window.InputBoxHandler.insertPrompt(inputBox, prompt.content, listEl);
+      const inserted = insertionContext
+        ? window.InputBoxHandler.replaceRange(insertionContext.inputBox, prompt.content, insertionContext.range)
+        : await window.InputBoxHandler.insertPrompt(inputBox, prompt.content, listEl);
       if (!inserted) return { ok: false, error: 'insert_failed', knownSite };
-      PromptUIManager.hidePromptList(listEl);
+      if (!insertionContext) PromptUIManager.hidePromptList(listEl);
       return { ok: true };
     }
     PanelRouter.mount(PanelView.VARIABLE_INPUT, {
@@ -2349,7 +2357,9 @@ const PromptMediator = (() => {
           console.error('Input box not found.');
           return;
         }
-        const inserted = await window.InputBoxHandler.insertPrompt(targetBox, processed, qs(`#${SELECTORS.PROMPT_LIST}`));
+        const inserted = insertionContext
+          ? window.InputBoxHandler.replaceRange(insertionContext.inputBox, processed, insertionContext.range)
+          : await window.InputBoxHandler.insertPrompt(targetBox, processed, qs(`#${SELECTORS.PROMPT_LIST}`));
         if (!inserted) {
           console.error('Failed to insert variable prompt.');
           return;
@@ -2462,6 +2472,9 @@ const PromptMediator = (() => {
         onPromptsChanged((prompts) => {
           // COMMENT: Only refresh items when the list view is active to avoid polluting non-list views
           PromptUIManager.refreshItemsIfListActive(prompts);
+          window.__OPM_SLASH_PICKER__?.setPrompts(prompts).catch((err) => {
+            console.error('Failed to refresh slash-command picker:', err);
+          });
         });
       } catch (err) {
         state.storageWatcherAttached = false; // COMMENT: Allow retry if import fails transiently
@@ -2472,6 +2485,21 @@ const PromptMediator = (() => {
 
   const setupKeyboardShortcuts = () => {
     KeyboardManager.initialize();
+  };
+
+  const setupSlashCommandPicker = async () => {
+    if (typeof window.SlashCommandPicker !== 'function' || window.__OPM_SLASH_PICKER__) return;
+    const utils = await import(OPMApi.runtime.getURL('utils/slashCommandUtils.js'));
+    const picker = new window.SlashCommandPicker({
+      getInputBox: () => window.InputBoxHandler.getInputBox(),
+      getPrompts: () => PromptStorageManager.getPrompts(),
+      getFolders: () => PromptStorageManager.getFolders(),
+      utils,
+      onSelect: (prompt, { inputBox, range }) => handlePromptSelect(prompt, {
+        insertionContext: { inputBox, range },
+      }),
+    });
+    if (await picker.attach()) window.__OPM_SLASH_PICKER__ = picker;
   };
 
   const bootstrap = async (ui, processor) => {
@@ -2500,6 +2528,9 @@ const PromptMediator = (() => {
     setupDisplayModeWatcher();
     setupStorageChangeMonitor();
     setupKeyboardShortcuts();
+    setupSlashCommandPicker().catch((error) => {
+      console.error('Failed to initialize slash-command picker:', error);
+    });
   };
 
   return { bootstrap };
