@@ -54,6 +54,7 @@
                 "storage/learnedInputStorage.js",
                 "utils.js",
                 "utils/tags.js",
+                "utils/slashCommandUtils.js",
                 "llm_providers.json",
                 "locales/*.json",
                 "locales/changelog.zh-CN.html"

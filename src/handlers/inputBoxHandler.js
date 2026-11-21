@@ -1642,6 +1642,81 @@ class InputBoxHandler {
   }
 
   /**
+   * Replace a captured slash-command range without overwriting the surrounding draft.
+   * @param {HTMLElement} inputBox
+   * @param {string} content
+   * @param {{ kind: 'text', start: number, end: number } | { kind: 'range', value: Range }} targetRange
+   * @returns {boolean}
+   */
+  static replaceRange(inputBox, content, targetRange) {
+    if (!inputBox || !content || !targetRange) return false;
+
+    if ((inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') && targetRange.kind === 'text') {
+      try {
+        inputBox.focus();
+        inputBox.setRangeText(content, targetRange.start, targetRange.end, 'end');
+        inputBox.dispatchEvent(new InputEvent('input', {
+          inputType: 'insertReplacementText',
+          data: content,
+          bubbles: true,
+        }));
+        return true;
+      } catch (_) {
+        // The replacement may already have happened before InputEvent failed
+        // (for example, in older browsers without InputEvent support).
+        try {
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+    }
+
+    const range = targetRange.kind === 'range' ? targetRange.value : null;
+    if (!inputBox.isContentEditable || !range
+      || !inputBox.contains(range.startContainer)
+      || !inputBox.contains(range.endContainer)) return false;
+
+    InputBoxHandler._activateComposer(inputBox);
+    const selection = window.getSelection();
+    if (!selection) return false;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const beforeText = InputBoxHandler._readPlainText(inputBox);
+    if (InputBoxHandler._isChatGPTProseMirror(inputBox) && content.includes('\n')) {
+      if (InputBoxHandler._insertChatGPTMultilineHtml(inputBox, content)) return true;
+    } else {
+      try {
+        if (document.execCommand('insertText', false, content)) return true;
+      } catch (_) {
+        // Fall through to a direct range update when execCommand is unavailable.
+      }
+    }
+    const afterCommand = InputBoxHandler._readPlainText(inputBox);
+    if (afterCommand !== beforeText && afterCommand.includes(content)) return true;
+
+    try {
+      const replacement = document.createTextNode(content);
+      range.deleteContents();
+      range.insertNode(replacement);
+      range.setStartAfter(replacement);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      inputBox.dispatchEvent(new InputEvent('input', {
+        inputType: 'insertReplacementText',
+        data: content,
+        bubbles: true,
+      }));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
    * Inserts a prompt into the detected input box.
    * @param {HTMLElement} inputBox - The input box element.
    * @param {string} content - The prompt content to insert.
@@ -1832,4 +1907,3 @@ if (typeof OPMApi !== 'undefined' && OPMApi.runtime?.onMessage && !window.__OPM_
 }
 
 }
-
