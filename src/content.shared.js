@@ -923,19 +923,19 @@
             }
           }));
 
-          settings.appendChild(Elements.createToggleRow({
-            labelKey: 'settings.forceDarkModePanel',
-            getValue: async () => {
-              const enabled = await window.PromptStorageManager.getForceDarkMode();
-              window.isDarkModeForced = !!enabled;
-              return enabled;
-            },
-            onToggle: async (active) => {
-              window.isDarkModeForced = active;
-              await window.PromptStorageManager.saveForceDarkMode(active);
-              window.PromptUIManager.updateThemeForUI();
-            }
-          }));
+          const themeRow = createEl('div', { styles: { display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '12px' } });
+          const themeLabel = createEl('label', { attributes: { 'data-i18n': 'settings.themeMode' }, textContent: t('settings.themeMode') });
+          const themeSelect = createEl('select', { className: 'opm-input-field' });
+          [['system', 'settings.themeSystem'], ['light', 'settings.themeLight'], ['dark', 'settings.themeDark']].forEach(([value, key]) => {
+            const option = createEl('option', { attributes: { value, 'data-i18n': key }, textContent: t(key) });
+            themeSelect.appendChild(option);
+          });
+          window.PromptStorageManager.getThemeMode().then(mode => { themeSelect.value = mode; }).catch(console.error);
+          themeSelect.addEventListener('change', async () => {
+            await window.PromptStorageManager.saveThemeMode(themeSelect.value);
+          });
+          themeRow.append(themeLabel, themeSelect);
+          settings.appendChild(themeRow);
 
           const dataSectionTitle = createEl('div', { attributes: { 'data-i18n': 'settings.promptManagementPanel' }, styles: { fontWeight: 'bold', fontSize: '14px', marginTop: '6px' }, textContent: t('settings.promptManagementPanel') });
           const dataActions = createEl('div', { styles: { display: 'flex', gap: '8px' } });

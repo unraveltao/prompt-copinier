@@ -12,18 +12,22 @@ const EXCLUDED_PROVIDERS = [
 
 const puppeteer = require('puppeteer');
 const path = require('path');
+const fs = require('fs');
 
 const EXTENSION_PATH = path.join(__dirname, '../src/');
+const TEST_PROFILE_PATH = path.join(__dirname, '../dist', `puppeteer-selector-${process.pid}`);
 
 let browser;
 
 beforeEach(async () => {
+    fs.mkdirSync(path.dirname(TEST_PROFILE_PATH), { recursive: true });
     browser = await puppeteer.launch({
-        headless: false,
-        args: [
-            `--disable-extensions-except=${EXTENSION_PATH}`,
-            `--load-extension=${EXTENSION_PATH}`
-        ]
+        headless: 'new',
+        pipe: true,
+        enableExtensions: [EXTENSION_PATH],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        userDataDir: TEST_PROFILE_PATH,
+        args: process.env.PUPPETEER_NO_SANDBOX === '1' ? ['--no-sandbox'] : []
     });
 
     // Close the extension permissions page that opens on startup (if any).
@@ -51,7 +55,7 @@ afterEach(async () => {
         await browser.close();
     }
     browser = undefined;
-});
+}, 30000);
 
 test('Test element selectors for all LLM providers', async () => {
     // Load the providers from the JSON file

@@ -254,7 +254,7 @@
   "onboarding.hoverStartAlt": "悬停即可开始",
   "onboarding.exploreAlt": "探索功能",
   "prompt.update": "保存更改",
-  "settings.forceDarkModePanel": "强制深色模式",
+  "settings.forceDarkModePanel": "外观",
   "settings.promptManagementPanel": "提示词管理",
   "prompt.submitVariables": "插入提示词",
   "changelog.englishFallback": "中文更新日志暂不可用，以下显示英文原文。",
@@ -264,5 +264,9 @@
   "prompt.dragHandle": "拖动以调整顺序",
   "prompt.dragReorder": "拖动以调整顺序",
   "prompt.drag": "拖动",
-  "links.extensionStore": "扩展页面"
+  "links.extensionStore": "扩展页面",
+  "settings.themeMode": "外观",
+  "settings.themeSystem": "跟随系统",
+  "settings.themeLight": "浅色",
+  "settings.themeDark": "深色"
 }

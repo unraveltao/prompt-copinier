@@ -254,7 +254,7 @@
   "onboarding.hoverStartAlt": "Hover to start",
   "onboarding.exploreAlt": "Explore features",
   "prompt.update": "Update",
-  "settings.forceDarkModePanel": "Force Dark Mode",
+  "settings.forceDarkModePanel": "Appearance",
   "settings.promptManagementPanel": "Prompt Management",
   "prompt.submitVariables": "Submit",
   "changelog.englishFallback": "Chinese changelog unavailable. Showing English.",
@@ -264,5 +264,9 @@
   "prompt.dragHandle": "Drag handle",
   "prompt.dragReorder": "Drag to reorder",
   "prompt.drag": "Drag",
-  "links.extensionStore": "Extension page"
+  "links.extensionStore": "Extension page",
+  "settings.themeMode": "Appearance",
+  "settings.themeSystem": "Follow system",
+  "settings.themeLight": "Light",
+  "settings.themeDark": "Dark"
 }

@@ -254,7 +254,7 @@
   "onboarding.hoverStartAlt": "Survolez pour commencer",
   "onboarding.exploreAlt": "Explorer les fonctionnalités",
   "prompt.update": "Mettre à jour",
-  "settings.forceDarkModePanel": "Forcer le mode sombre",
+  "settings.forceDarkModePanel": "Apparence",
   "settings.promptManagementPanel": "Gestion des prompts",
   "prompt.submitVariables": "Valider",
   "changelog.englishFallback": "Journal des modifications chinois indisponible. Affichage en anglais.",
@@ -264,5 +264,9 @@
   "prompt.dragHandle": "Poignée de glissement",
   "prompt.dragReorder": "Glisser pour réordonner",
   "prompt.drag": "Glisser",
-  "links.extensionStore": "Page de l’extension"
+  "links.extensionStore": "Page de l’extension",
+  "settings.themeMode": "Apparence",
+  "settings.themeSystem": "Système",
+  "settings.themeLight": "Clair",
+  "settings.themeDark": "Sombre"
 }

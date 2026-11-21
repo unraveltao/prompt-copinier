@@ -31,6 +31,12 @@ for (const browser of targets) {
   const archive = path.join(artifacts, `open-prompt-manager-${manifest.version}-${browser}.zip`);
   await rm(archive, { force: true });
   // Store packages contain only the shared application and target manifest.
-  execFileSync('zip', ['-q', '-r', archive, '.', '-x', '*.DS_Store'], { cwd: destination });
+  if (process.platform === 'win32') {
+    const quotePowerShell = value => `'${value.replace(/'/g, "''")}'`;
+    const command = `Compress-Archive -Path ${quotePowerShell(path.join(destination, '*'))} -DestinationPath ${quotePowerShell(archive)} -Force`;
+    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], { stdio: 'inherit' });
+  } else {
+    execFileSync('zip', ['-q', '-r', archive, '.', '-x', '*.DS_Store'], { cwd: destination });
+  }
   console.log(`${browser}: ${destination}\nPackage: ${archive}`);
 }

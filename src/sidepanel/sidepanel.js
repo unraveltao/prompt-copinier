@@ -18,6 +18,7 @@ import {
 import { expandOriginPatterns, hasAnyOriginPermission } from '../utils/originPatterns.js';
 import { normalizeTag, uniqueNormalizedTags } from '../utils/tags.js';
 import { mountSidepanelFooter } from './sidepanelFooter.js';
+import { initializeTheme } from '../theme.js';
 
 const t = (key, params) => globalThis.OPMI18n.t(key, params);
 const bind = (element, key, params, attribute) => globalThis.OPMI18n.bind(element, key, params, attribute);
@@ -114,7 +115,27 @@ let pendingVariablePrompt = null;
 
 /** COMMENT: Match in-page panel light/dark field classes in the sidebar. */
 function getSidebarThemeClass() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'opm-dark' : 'opm-light';
+  return document.documentElement.dataset.theme === 'dark' ? 'opm-dark' : 'opm-light';
+}
+
+function refreshVariableInputTheme() {
+  const variableView = document.getElementById('sidebar-variable-input');
+  if (!variableView) return;
+  const themeClass = getSidebarThemeClass();
+  variableView.querySelectorAll('.opm-light, .opm-dark').forEach((element) => {
+    element.classList.remove('opm-light', 'opm-dark');
+    element.classList.add(themeClass);
+  });
+  variableView.classList.remove('opm-light', 'opm-dark');
+  variableView.classList.add(themeClass);
+}
+
+function refreshHeaderIconTheme(effectiveTheme) {
+  const icon = document.querySelector('[data-theme-icon]');
+  if (!icon) return;
+  icon.src = effectiveTheme === 'dark'
+    ? '../icons/icon-main-s.png'
+    : '../icons/icon-main-s color.png';
 }
 
 /** COMMENT: Show variable fill-in mode — hides prompt list chrome like the in-page panel. */
@@ -1795,6 +1816,10 @@ async function refreshPromptListView(force = false) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await globalThis.OPMI18n.ready;
+  await initializeTheme((effectiveTheme) => {
+    refreshHeaderIconTheme(effectiveTheme);
+    refreshVariableInputTheme();
+  });
   maintainSidePanelPresence();
 
   if (isExpandedTabView()) {

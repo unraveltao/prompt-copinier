@@ -11,6 +11,7 @@ import {
 import { expandOriginPatterns } from './utils/originPatterns.js';
 import { uniqueNormalizedTags } from './utils/tags.js';
 import { mountSidepanelFooter } from './sidepanel/sidepanelFooter.js';
+import { getThemeMode, initializeTheme, saveThemeMode } from './theme.js';
 
 const t = (key, params) => globalThis.OPMI18n.t(key, params);
 
@@ -21,7 +22,6 @@ const ALLOWED_DISPLAY_MODES = new Set(['standard', 'hotCorner', 'invisible']);
 const KEYBOARD_SHORTCUT_KEY = 'keyboardShortcut';
 const APPEND_MODE_KEY = 'disableOverwrite';
 const ENABLE_TAGS_KEY = 'enableTags';
-const FORCE_DARK_KEY = 'forceDarkMode';
 const TAGS_ORDER_KEY = 'tagsOrder';
 
 /** COMMENT: Default open-panel shortcut per platform (matches content.js KeyboardManager). */
@@ -95,13 +95,11 @@ function initDisplayModePicker() {
 function initPreferenceToggles() {
   const appendToggle = document.getElementById('toggle-append-mode');
   const tagsToggle = document.getElementById('toggle-enable-tags');
-  const darkToggle = document.getElementById('toggle-force-dark');
-  if (!appendToggle || !tagsToggle || !darkToggle) return;
+  if (!appendToggle || !tagsToggle) return;
 
-  storageGet([APPEND_MODE_KEY, ENABLE_TAGS_KEY, FORCE_DARK_KEY]).then((result) => {
+  storageGet([APPEND_MODE_KEY, ENABLE_TAGS_KEY]).then((result) => {
     appendToggle.checked = !!result[APPEND_MODE_KEY];
     tagsToggle.checked = !!result[ENABLE_TAGS_KEY];
-    darkToggle.checked = !!result[FORCE_DARK_KEY];
     updateTagManagementVisibility(tagsToggle.checked);
     // COMMENT: Render after toggles load — checkbox defaults are false before storage resolves
     renderTagManagement().catch(console.error);
@@ -117,8 +115,20 @@ function initPreferenceToggles() {
     renderTagManagement().catch(console.error);
   });
 
-  darkToggle.addEventListener('change', () => {
-    storageSet({ [FORCE_DARK_KEY]: darkToggle.checked });
+}
+
+async function initThemePicker() {
+  const themeSelect = document.getElementById('theme-mode-select');
+  if (!themeSelect) return;
+
+  await initializeTheme((_effectiveTheme, mode) => {
+    themeSelect.value = mode;
+  });
+  themeSelect.addEventListener('change', () => {
+    saveThemeMode(themeSelect.value).catch((error) => {
+      console.error('Failed to save theme preference:', error);
+      getThemeMode().then((mode) => { themeSelect.value = mode; }).catch(console.error);
+    });
   });
 }
 
@@ -601,6 +611,7 @@ async function deleteAllPrompts() {
 document.addEventListener('DOMContentLoaded', async () => {
   await globalThis.OPMI18n.ready;
   const shell = document.querySelector('.settings-page-shell');
+  await initThemePicker();
   mountSidepanelFooter({ active: 'settings', root: shell || document.body });
 
   initLanguagePicker();

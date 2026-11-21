@@ -254,7 +254,7 @@
   "onboarding.hoverStartAlt": "Passe o cursor para começar",
   "onboarding.exploreAlt": "Explorar recursos",
   "prompt.update": "Atualizar",
-  "settings.forceDarkModePanel": "Forçar modo escuro",
+  "settings.forceDarkModePanel": "Aparência",
   "settings.promptManagementPanel": "Gerenciamento de prompts",
   "prompt.submitVariables": "Enviar",
   "changelog.englishFallback": "Novidades em chinês indisponíveis. Exibindo em inglês.",
@@ -264,5 +264,9 @@
   "prompt.dragHandle": "Alça para arrastar",
   "prompt.dragReorder": "Arraste para reordenar",
   "prompt.drag": "Arrastar",
-  "links.extensionStore": "Página da extensão"
+  "links.extensionStore": "Página da extensão",
+  "settings.themeMode": "Aparência",
+  "settings.themeSystem": "Seguir sistema",
+  "settings.themeLight": "Claro",
+  "settings.themeDark": "Escuro"
 }

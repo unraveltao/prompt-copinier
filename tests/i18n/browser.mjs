@@ -70,7 +70,9 @@ async function run(name, isHost = false) {
 try {
   browser = await puppeteer.launch({
     headless: true,
+    pipe: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    userDataDir: path.join(screenshots, '.puppeteer-profile'),
     args: ['--no-sandbox'],
   });
   for (const name of ['sidepanel/index.html?expanded=1', 'sidepanel/index.html', 'settings.html', 'permissions/permissions.html', 'opd-settings.html']) await run(name);
