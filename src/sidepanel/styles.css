@@ -376,6 +376,64 @@ html {
     border-color: var(--primary);
   }
 
+  .prompt-category-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .prompt-category-filter,
+  .prompt-category-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 7px 9px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    background: #fff;
+    color: #494949;
+    font: inherit;
+  }
+
+  .prompt-category-form {
+    display: flex;
+    gap: 6px;
+  }
+
+  .prompt-category-add {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  #prompt-list li.prompt-category-heading {
+    padding: 4px 0 2px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  #prompt-list button.prompt-category-toggle {
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #prompt-list button.prompt-category-toggle:hover {
+    background: rgba(127, 127, 127, 0.12);
+  }
+
   .spm-tags-filter-bar {
     display: flex;
     flex-wrap: nowrap;

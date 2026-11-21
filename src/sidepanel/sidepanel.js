@@ -18,6 +18,7 @@ import {
 import { expandOriginPatterns, hasAnyOriginPermission } from '../utils/originPatterns.js';
 import { normalizeTag, uniqueNormalizedTags } from '../utils/tags.js';
 import { mountSidepanelFooter } from './sidepanelFooter.js';
+import { groupPromptsByFolder, promptMatchesFolder } from './categoryUtils.js';
 
 const t = (key, params) => globalThis.OPMI18n.t(key, params);
 const bind = (element, key, params, attribute) => globalThis.OPMI18n.bind(element, key, params, attribute);
@@ -222,6 +223,8 @@ function resetPromptForm({ keepOpen = false } = {}) {
   if (titleInput) titleInput.value = '';
   if (contentInput) contentInput.value = '';
   if (uuidInput) uuidInput.value = '';
+  const folderInput = document.getElementById('prompt-folder');
+  if (folderInput) folderInput.value = '';
   if (formTagInput) formTagInput.setTags([]);
   if (submitButton) {
     const label = submitButton.querySelector('[data-i18n]');
@@ -233,7 +236,7 @@ function resetPromptForm({ keepOpen = false } = {}) {
   if (!keepOpen) setComposerOpen(false);
 }
 
-function openComposerView({ title = '', content = '', uuid = '', tags = [] } = {}) {
+function openComposerView({ title = '', content = '', uuid = '', tags = [], folderId = null } = {}) {
   const {
     titleInput,
     contentInput,
@@ -245,6 +248,8 @@ function openComposerView({ title = '', content = '', uuid = '', tags = [] } = {
   if (titleInput) titleInput.value = title;
   if (contentInput) contentInput.value = content;
   if (uuidInput) uuidInput.value = uuid;
+  const folderInput = document.getElementById('prompt-folder');
+  if (folderInput) folderInput.value = folderId || '';
   if (formTagInput) formTagInput.setTags(tags);
 
   if (submitButton) {
@@ -686,11 +691,12 @@ async function loadInitSnapshot() {
     TAG_STORAGE.enableTags,
     TAG_STORAGE.tagsOrder,
   ];
-  const [prompts, storageData, pinnedInputs] = await Promise.all([
+  const [prompts, folders, storageData, pinnedInputs] = await Promise.all([
     PromptStorage.getPrompts(),
+    PromptStorage.getFolders(),
     new Promise(resolve => {
       try {
-        OPMApi.storage.local.get(settingsKeys, resolve);
+        OPMApi.storage.local.get([...settingsKeys, COLLAPSED_FOLDERS_KEY], resolve);
       } catch (_) {
         resolve({});
       }
@@ -700,6 +706,10 @@ async function loadInitSnapshot() {
 
   return {
     prompts,
+    folders,
+    collapsedFolders: Array.isArray(storageData?.[COLLAPSED_FOLDERS_KEY])
+      ? storageData[COLLAPSED_FOLDERS_KEY]
+      : [],
     providersMap: storageData?.aiProvidersMap || null,
     pinnedInputs,
     activeTagFilter: storageData?.[TAG_STORAGE.activeTagFilter] ?? 'all',
@@ -714,6 +724,9 @@ async function loadInitSnapshot() {
 async function initSidepanelContent() {
   const snapshot = await loadInitSnapshot();
   allPromptsCache = snapshot.prompts;
+  allFoldersCache = snapshot.folders;
+  collapsedFolders = new Set(snapshot.collapsedFolders);
+  renderCategoryControls();
   activeTagFilter = snapshot.activeTagFilter || 'all';
   cachedEnableTags = snapshot.enableTags;
   cachedTagsOrder = snapshot.tagsOrder;
@@ -753,7 +766,11 @@ async function initSidepanelContent() {
 let llmsAvailableCollapsed = true;
 
 let allPromptsCache = [];
+let allFoldersCache = [];
 let activeTagFilter = 'all';
+let activeFolderFilter = 'all';
+const COLLAPSED_FOLDERS_KEY = 'promptCopinier.collapsedCategories';
+let collapsedFolders = new Set();
 let searchTerm = '';
 let formTagInput = null;
 // COMMENT: Cached tag settings from the init snapshot to avoid repeat storage reads
@@ -769,6 +786,7 @@ function promptListDisplaySignature(prompts = []) {
     p.uuid,
     p.title,
     p.content,
+    p.folderId || '',
     (Array.isArray(p.tags) ? p.tags.join('\u001f') : ''),
   ].join('\u001e')).join('\u001d');
 }
@@ -1041,6 +1059,7 @@ function buildPromptListItemActions(prompt) {
         content: prompt.content,
         uuid: prompt.uuid,
         tags: prompt.tags || [],
+        folderId: prompt.folderId || null,
       });
     },
   ));
@@ -1123,6 +1142,7 @@ function promptMatchesFilters(prompt) {
   const title = (prompt.title || '').toLowerCase();
   const content = (prompt.content || '').toLowerCase();
   const tagsFlat = Array.isArray(prompt.tags) ? prompt.tags.map(t => String(t).toLowerCase()).join(' ') : '';
+  const activeFolder = activeFolderFilter;
 
   const matchesSearch = value === '' || title.includes(value) || content.includes(value) || tagsFlat.includes(value);
 
@@ -1131,7 +1151,42 @@ function promptMatchesFilters(prompt) {
     const tagList = Array.isArray(prompt.tags) ? prompt.tags.map(t => String(t).toLowerCase()) : [];
     matchesTag = tagList.includes(activeTag);
   }
-  return matchesSearch && matchesTag;
+  const matchesFolder = promptMatchesFolder(prompt, activeFolder);
+  return matchesSearch && matchesTag && matchesFolder;
+}
+
+function renderCategoryControls() {
+  const categoryFilter = document.getElementById('prompt-category-filter');
+  const folderSelect = document.getElementById('prompt-folder');
+  const renderOptions = (select, firstLabel) => {
+    if (!select) return;
+    const value = select.value;
+    select.innerHTML = '';
+    const first = document.createElement('option');
+    first.value = select === categoryFilter ? 'all' : '';
+    bind(first, firstLabel);
+    select.appendChild(first);
+    allFoldersCache.forEach((folder) => {
+      const option = document.createElement('option');
+      option.value = folder.id;
+      option.textContent = folder.name;
+      select.appendChild(option);
+    });
+    if ([...select.options].some((option) => option.value === value)) select.value = value;
+  };
+  renderOptions(categoryFilter, 'prompt.allCategories');
+  renderOptions(folderSelect, 'prompt.uncategorized');
+}
+
+async function createPromptCategory(name) {
+  const cleanName = String(name || '').trim();
+  if (!cleanName) return;
+  if (allFoldersCache.some((folder) => folder.name.toLocaleLowerCase() === cleanName.toLocaleLowerCase())) {
+    showSidepanelToast('prompt.categoryExists', { error: true });
+    return;
+  }
+  await PromptStorage.saveFolder({ name: cleanName });
+  await refreshPromptListView(true);
 }
 
 /** COMMENT: Tag input row for create/edit — mirrors in-page TagUI.createTagInput */
@@ -1398,6 +1453,8 @@ async function renderPromptListControls(prompts, allowedOverride) {
   controls.hidden = !allowed;
 
   if (allowed) {
+    allFoldersCache = await PromptStorage.getFolders();
+    renderCategoryControls();
     await renderTagsFilterBar(prompts, cachedEnableTags);
   }
 }
@@ -1749,29 +1806,51 @@ function displayPrompts(prompts, totalCount = prompts.length) {
   }
   if (emptyState) emptyState.style.display = 'none';
   const fragment = document.createDocumentFragment();
-  prompts.forEach((prompt) => {
-    const li = document.createElement('li');
-    li.dataset.uuid = prompt.uuid;
-    const titleSpan = document.createElement('span');
-    titleSpan.textContent = prompt.title;
-    titleSpan.style.margin = '2px';
-    titleSpan.style.padding = '3px';
-    titleSpan.style.verticalAlign = 'middle';
-    titleSpan.style.display = 'inline-block';
-    li.appendChild(titleSpan);
-    li.appendChild(buildPromptListItemActions(prompt));
-    bind(li, 'prompt.insertCurrentPage', {}, 'title');
+  const groups = groupPromptsByFolder(prompts, allFoldersCache, t('prompt.uncategorized'));
 
-    li.addEventListener('click', () => {
-      handlePromptRowClick(prompt).catch(console.error);
+  groups.forEach((group) => {
+    const header = document.createElement('li');
+    header.className = 'prompt-category-heading';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'prompt-category-toggle';
+    const isCollapsed = collapsedFolders.has(group.id);
+    toggle.setAttribute('aria-expanded', String(!isCollapsed));
+    toggle.textContent = `${isCollapsed ? '▸' : '▾'} ${group.name} (${group.prompts.length})`;
+    toggle.addEventListener('click', async () => {
+      if (collapsedFolders.has(group.id)) collapsedFolders.delete(group.id);
+      else collapsedFolders.add(group.id);
+      await setLocalSetting(COLLAPSED_FOLDERS_KEY, [...collapsedFolders]);
+      displayPrompts(prompts, totalCount);
     });
+    header.appendChild(toggle);
+    fragment.appendChild(header);
+    if (isCollapsed) return;
 
-    // COMMENT: Collapse the overflow menu when the pointer leaves the row
-    li.addEventListener('mouseleave', () => {
-      li.classList.remove('spm-actions-menu-open');
+    group.prompts.forEach((prompt) => {
+      const li = document.createElement('li');
+      li.dataset.uuid = prompt.uuid;
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = prompt.title;
+      titleSpan.style.margin = '2px';
+      titleSpan.style.padding = '3px';
+      titleSpan.style.verticalAlign = 'middle';
+      titleSpan.style.display = 'inline-block';
+      li.appendChild(titleSpan);
+      li.appendChild(buildPromptListItemActions(prompt));
+      bind(li, 'prompt.insertCurrentPage', {}, 'title');
+
+      li.addEventListener('click', () => {
+        handlePromptRowClick(prompt).catch(console.error);
+      });
+
+      // COMMENT: Collapse the overflow menu when the pointer leaves the row
+      li.addEventListener('mouseleave', () => {
+        li.classList.remove('spm-actions-menu-open');
+      });
+
+      fragment.appendChild(li);
     });
-
-    fragment.appendChild(li);
   });
   promptList.appendChild(fragment);
   applyPendingActionFeedback();
@@ -1779,7 +1858,11 @@ function displayPrompts(prompts, totalCount = prompts.length) {
 
 // COMMENT: Load prompts from storage, apply search/tag filters, and render
 async function refreshPromptListView(force = false) {
-  const nextPrompts = await PromptStorage.getPrompts();
+  const [nextPrompts, nextFolders] = await Promise.all([
+    PromptStorage.getPrompts(),
+    PromptStorage.getFolders(),
+  ]);
+  allFoldersCache = nextFolders;
   const nextSig = promptListDisplaySignature(nextPrompts);
   if (!force && nextSig === lastPromptListDisplaySig) {
     allPromptsCache = nextPrompts;
@@ -1878,6 +1961,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const categoryFilter = document.getElementById('prompt-category-filter');
+  categoryFilter?.addEventListener('change', () => {
+    activeFolderFilter = categoryFilter.value || 'all';
+    refreshFilteredPromptList();
+  });
+
+  const categoryForm = document.getElementById('prompt-category-form');
+  const categoryName = document.getElementById('prompt-category-name');
+  categoryForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      await createPromptCategory(categoryName?.value);
+      if (categoryName) categoryName.value = '';
+    } catch (error) {
+      console.error(error);
+      showSidepanelToast('prompt.saveError', { error: true });
+    }
+  });
+
   try {
     OPMApi.tabs.onActivated.addListener(() => {
       scheduleActiveTabAssistantsRefresh();
@@ -1967,6 +2069,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const title = titleInput.value.trim();
     const content = contentInput.value;
     const tags = formTagInput ? formTagInput.getTags() : [];
+    const folderId = document.getElementById('prompt-folder')?.value || null;
 
     if (!title || !String(content).trim()) {
       showSidepanelToast('prompt.validationBeforeSave', { error: true });
@@ -1975,9 +2078,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       if (uuidInput.value === '') {
-        await PromptStorage.savePrompt({ title, content, tags });
+        await PromptStorage.savePrompt({ title, content, tags, folderId });
       } else {
-        await PromptStorage.updatePrompt(uuidInput.value, { title, content, tags });
+        await PromptStorage.updatePrompt(uuidInput.value, { title, content, tags, folderId });
       }
       resetPromptForm();
     } catch (error) {
