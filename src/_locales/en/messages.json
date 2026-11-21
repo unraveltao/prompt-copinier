@@ -1,9 +1,9 @@
 {
   "extensionName": {
-    "message": "Open Prompt Manager - for AI Agents & Assistants"
+    "message": "Prompt Copinier"
   },
   "extensionDescription": {
-    "message": "Save, organize and reuse your best AI prompts across ChatGPT, Claude, Gemini, Grok and more. Free and open source."
+    "message": "Save, organize, and quickly insert reusable prompts in ChatGPT and other AI chats. Free and open source."
   },
   "openSidebar": {
     "message": "Open Sidebar"
