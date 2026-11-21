@@ -51,6 +51,9 @@
         <form id="prompt-form">
           <input type="hidden" id="prompt-uuid" />
           <input type="text" id="prompt-title" class="opm-input-field" data-i18n-placeholder="prompt.title" placeholder="Prompt Title" required />
+          <select id="prompt-folder" class="opm-input-field" data-i18n-aria-label="prompt.categoryLabel" aria-label="Category">
+            <option value="" data-i18n="prompt.uncategorized">Uncategorized</option>
+          </select>
           <textarea id="prompt-content" class="opm-textarea-field" data-i18n-placeholder="prompt.contentPlaceholder" placeholder="Enter your prompt here - Use #variablename# for dynamic values." required></textarea>
           <div id="prompt-tags-host" class="prompt-tags-host" hidden></div>
           <div class="form-actions">
@@ -83,6 +86,15 @@
         </div>
         <!-- COMMENT: Search + tag filters mirror the in-page prompt list controls -->
         <div id="prompt-list-controls" class="prompt-list-controls" hidden>
+          <div class="prompt-category-controls">
+            <select id="prompt-category-filter" class="prompt-category-filter" data-i18n-aria-label="prompt.categoryFilter" aria-label="Filter by category">
+              <option value="all" data-i18n="prompt.allCategories">All categories</option>
+            </select>
+            <form id="prompt-category-form" class="prompt-category-form">
+              <input id="prompt-category-name" type="text" class="prompt-category-input" data-i18n-placeholder="prompt.categoryName" data-i18n-aria-label="prompt.categoryName" placeholder="New category" aria-label="New category" maxlength="60" />
+              <button type="submit" class="prompt-category-add" data-i18n="prompt.addCategory">Add</button>
+            </form>
+          </div>
           <div id="prompt-tags-filter" class="prompt-tags-filter" hidden></div>
           <input type="search" id="prompt-search-input" class="prompt-search-input" data-i18n-placeholder="prompt.search" placeholder="Type to search" autocomplete="off" />
         </div>
