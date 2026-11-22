@@ -6,8 +6,8 @@
 // COMMENT: Use var and window assignments so subsequent injected files see these values.
 var THEME_COLORS = window.THEME_COLORS || {
   primary: '#3674B5', primaryGradientStart: '#3674B5', primaryGradientEnd: '#578FCA',
-  hoverPrimary: '#205295', darkBackground: '#0A2647', lightBackground: '#F7FAFC',
-  darkBorder: '#144272', lightBorder: '#E2E8F0',
+  hoverPrimary: '#303B47', darkBackground: '#202833', lightBackground: '#F7FAFC',
+  darkBorder: '#2B3440', lightBorder: '#E2E8F0',
   darkShadow: '0 4px 20px rgba(0,0,0,0.3)', lightShadow: '0 4px 20px rgba(0,0,0,0.15)',
   inputDarkBorder: '1px solid #4A5568', inputLightBorder: '1px solid #CBD5E0',
   inputDarkBg: '#2D3748', inputLightBg: '#FFFFFF',
@@ -315,7 +315,7 @@ var injectGlobalStyles = window.injectGlobalStyles || function injectGlobalStyle
     }
     #${SELECTORS.ROOT}.opm-dark .opm-tag-pill-filter {
       border-color: var(--dark-border);
-      background-color: #144272;
+      background-color: #2B3440;
       color: var(--input-dark-text);
     }
     /* Selected state for tag pill */

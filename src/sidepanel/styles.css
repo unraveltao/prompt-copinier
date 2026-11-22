@@ -1313,9 +1313,9 @@ footer.footer {
   background-color: #2f669f;
 }
 
-@media (prefers-color-scheme: dark) {
+:root[data-theme="dark"] {
   .sidepanel-bottom-dock {
-    background: #0A2647;
+    background: #202833;
     border-top-color: rgba(255, 255, 255, 0.08);
   }
 }
@@ -1332,9 +1332,9 @@ footer.footer {
 /* ============================================================
    Unified dark theme overrides (matches content script theme)
    ============================================================ */
-@media (prefers-color-scheme: dark) {
+:root[data-theme="dark"] {
   body {
-    background-color: #0A2647;
+    background-color: #202833;
     color: #E2E8F0;
   }
   /* COMMENT: Subtle divider color in dark mode for Prompt Management section */
@@ -1342,17 +1342,27 @@ footer.footer {
     border-top-color: rgba(255,255,255,0.08);
   }
 
-  /* Headings adopt primary colour for contrast */
+  /* Headings use a lighter blue to keep small heading text readable */
   h2, h3 {
-    color: #3674B5;
+    color: #8AB4E2;
   }
 
   /* Input & textarea fields — exclude in-page-style prompt form fields */
   input[type="text"]:not(.opm-input-field),
   textarea:not(.opm-textarea-field) {
-    background-color: #144272;
+    background-color: #2B3440;
     color: #E2E8F0;
     border-color: #4A5568;
+  }
+
+  .prompt-search-input {
+    background: #28313C;
+    border-color: #4A5568;
+    color: #E2E8F0;
+  }
+
+  .prompt-search-input:focus {
+    background: #2B3440;
   }
 
   #prompt-form .opm-input-field,
@@ -1377,7 +1387,7 @@ footer.footer {
   }
 
   .spm-tag-pill {
-    background: #205295;
+    background: #303B47;
     border-color: #4A5568;
     color: #CBD5E0;
   }
@@ -1395,13 +1405,13 @@ footer.footer {
   }
 
   #cancel-edit-button {
-    background: #144272;
+    background: #2B3440;
     border-color: #4A5568;
     color: #E2E8F0;
   }
 
   body.settings-page .settings-page-shell > footer.footer {
-    background: #0A2647;
+    background: #202833;
     border-top-color: rgba(255, 255, 255, 0.08);
   }
 
@@ -1413,7 +1423,7 @@ footer.footer {
   @media (min-width: 1024px) {
     .sidebar-panel,
     .composer-panel {
-      background: #144272;
+      background: #2B3440;
       border-color: rgba(255, 255, 255, 0.08);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
@@ -1432,17 +1442,17 @@ footer.footer {
     }
 
     .prompt-search-input {
-      background: #0f3460;
+      background: #28313C;
       border-color: #4A5568;
       color: #E2E8F0;
     }
 
     .prompt-search-input:focus {
-      background: #144272;
+      background: #2B3440;
     }
 
     #prompt-list li:hover {
-      background-color: #0f3460;
+      background-color: #28313C;
       border-color: rgba(255, 255, 255, 0.1);
     }
   }
@@ -1453,7 +1463,7 @@ footer.footer {
   /* Main action buttons */
   button.main {
     background-color: var(--primary);
-    color: #E2E8F0;
+    color: #FFFFFF;
   }
   button.main:hover {
     background-color: #434C5E;
@@ -1461,7 +1471,7 @@ footer.footer {
 
   /* Prompt list items */
   #prompt-list li {
-    background-color: #205295;
+    background-color: #303B47;
     color: #CBD5E0;
   }
   #prompt-list button:hover {
@@ -1816,7 +1826,7 @@ button.main:hover {
     box-shadow: 0 0 0 1px rgba(54, 116, 181, 0.35);
   }
 
-  @media (prefers-color-scheme: dark) {
+  :root[data-theme="dark"] {
     .llm-pill.icon-only .llm-pill-icon,
     .llm-pill.custom-site-pill .llm-pill-icon.custom-site-favicon {
       background-color: #1A202C;
@@ -1829,11 +1839,16 @@ button.main:hover {
   }
   /* ---------------------------------------------------------- */
 
-@media (prefers-color-scheme: light) {
+:root[data-theme="light"] {
   #prompt-list li:hover {
     background-color: #e2e8f0;
     transform: translateY(-2px);
   }
+}
+
+/* Dark-theme helper text needs enough contrast at its normal 12px size. */
+:root[data-theme="dark"] .pm-subtitle {
+  color: #A0AEC0;
 }
 
 /* Scrollbar colour */
@@ -2157,19 +2172,19 @@ body.settings-page .opd-browse-btn-icon {
   display: block;
 }
 
-@media (prefers-color-scheme: dark) {
+:root[data-theme="dark"] {
   .settings-section {
     border-top-color: rgba(255, 255, 255, 0.08);
   }
 
   .settings-mode-option {
-    background: #144272;
+    background: #2B3440;
     border-color: #4a5568;
     color: #e2e8f0;
   }
 
   .settings-permission-item {
-    background: #144272;
+    background: #2B3440;
     border-color: #4a5568;
   }
 
@@ -2200,6 +2215,11 @@ body.settings-page .opd-browse-btn-icon {
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 0.35rem;
+}
+
+.settings-theme-select {
+  width: 100%;
+  min-height: 2.5rem;
 }
 
 .settings-shortcut-controls {
@@ -2390,7 +2410,7 @@ body.settings-page .shortcut-container p {
   background: rgba(54, 116, 181, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
+:root[data-theme="dark"] {
   .settings-shortcut-display {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.12);
@@ -2444,4 +2464,20 @@ body.settings-page .shortcut-container p {
   body.settings-page .opd-handle-card-icon {
     background: rgba(54, 116, 181, 0.2);
   }
+}
+
+/* Keep keyboard focus visible against both theme palettes. */
+:root[data-theme="light"] body :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #1A365D;
+  outline-offset: 2px;
+}
+
+:root[data-theme="dark"] body :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #90CDF4;
+  outline-offset: 2px;
+}
+
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3 {
+  color: #8AB4E2;
 }

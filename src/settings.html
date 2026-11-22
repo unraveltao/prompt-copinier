@@ -97,11 +97,12 @@
         <input type="checkbox" id="toggle-enable-tags" class="settings-toggle-input">
         <span class="settings-toggle-switch" aria-hidden="true"></span>
       </label>
-      <label class="settings-toggle-row">
-        <span data-i18n="settings.forceDarkMode">Force dark mode</span>
-        <input type="checkbox" id="toggle-force-dark" class="settings-toggle-input">
-        <span class="settings-toggle-switch" aria-hidden="true"></span>
-      </label>
+      <label class="settings-field-label settings-theme-label" for="theme-mode-select" data-i18n="settings.themeMode">Appearance</label>
+      <select id="theme-mode-select" class="opm-input-field settings-theme-select">
+        <option value="system" data-i18n="settings.themeSystem">Follow system</option>
+        <option value="light" data-i18n="settings.themeLight">Light</option>
+        <option value="dark" data-i18n="settings.themeDark">Dark</option>
+      </select>
     </div>
   </section>
 

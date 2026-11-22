@@ -720,18 +720,16 @@ ensureStylesInjected();
  * Theme handling (dark / light) with subscription hook
  * -------------------------------------------------------------------------*/
 let isDarkModeActive = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-// Initialize global forced state (shared with content.shared.js)
+let themeMode = 'system';
 if (typeof window.isDarkModeForced === 'undefined') window.isDarkModeForced = false;
-
-/* Read current mode */
-const isDarkMode = () => (window.isDarkModeForced ? true : isDarkModeActive);
+const isDarkMode = () => themeMode === 'dark' || (themeMode === 'system' && isDarkModeActive);
 
 /* Listen to OS-level preference changes */
 if (window.matchMedia) {
   const mql = window.matchMedia('(prefers-color-scheme: dark)');
   mql.addEventListener('change', e => {
     isDarkModeActive = e.matches;
-    PromptUIManager.updateThemeForUI();
+    if (themeMode === 'system') PromptUIManager.updateThemeForUI();
   });
 }
 
@@ -819,6 +817,18 @@ class PromptStorageManager {
   static async saveDisplayMode(mode) { return await PromptStorageManager.setData('displayMode', mode); }
   static async getForceDarkMode() { return await PromptStorageManager.getData('forceDarkMode', false); }
   static async saveForceDarkMode(enabled) { return await PromptStorageManager.setData('forceDarkMode', !!enabled); }
+  static async getThemeMode() {
+    const stored = await PromptStorageManager.getData('themeMode', null);
+    return ['system', 'light', 'dark'].includes(stored) ? stored : (await this.getForceDarkMode() ? 'dark' : 'system');
+  }
+  static async saveThemeMode(mode) {
+    if (!['system', 'light', 'dark'].includes(mode)) throw new Error(`Unsupported theme mode: ${mode}`);
+    themeMode = mode;
+    window.isDarkModeForced = mode === 'dark';
+    await PromptStorageManager.setData('themeMode', mode);
+    await PromptStorageManager.saveForceDarkMode(mode === 'dark');
+    PromptUIManager.updateThemeForUI();
+  }
 
   // COMMENT: Preference to append prompts instead of overwriting the input area
   static async getDisableOverwrite() {
@@ -2446,9 +2456,12 @@ const PromptMediator = (() => {
           console.error('Failed to refresh display mode after storage change:', err);
         });
       }
-      if (changes.forceDarkMode) {
-        window.isDarkModeForced = !!changes.forceDarkMode.newValue;
-        PromptUIManager.updateThemeForUI();
+      if (changes.forceDarkMode || changes.themeMode) {
+        PromptStorageManager.getThemeMode().then(mode => {
+          themeMode = mode;
+          window.isDarkModeForced = mode === 'dark';
+          PromptUIManager.updateThemeForUI();
+        }).catch(console.error);
       }
     });
   };
@@ -2484,7 +2497,8 @@ const PromptMediator = (() => {
 
     // COMMENT: Load theme preference before UI injection
     try {
-      window.isDarkModeForced = await PromptStorageManager.getForceDarkMode();
+      themeMode = await PromptStorageManager.getThemeMode();
+      window.isDarkModeForced = themeMode === 'dark';
     } catch (_) { /* ignore */ }
 
     state.processor = processor;

@@ -1,20 +1,24 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
+const fs = require('fs');
 const { getExtensionId } = require('./utils.test.js');
 
 const EXTENSION_PATH = path.join(__dirname, '../src/');
+const TEST_PROFILE_PATH = path.join(__dirname, '../dist', `puppeteer-test-${process.pid}`);
 
 let browser;
 let extensionId;
 
 // --- Before Each Test ---
 beforeEach(async () => {
+    fs.mkdirSync(path.dirname(TEST_PROFILE_PATH), { recursive: true });
     browser = await puppeteer.launch({
-        headless: false,
-        args: [
-            `--disable-extensions-except=${EXTENSION_PATH}`,
-            `--load-extension=${EXTENSION_PATH}`
-        ]
+        headless: 'new',
+        pipe: true,
+        enableExtensions: [EXTENSION_PATH],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        userDataDir: TEST_PROFILE_PATH,
+        args: process.env.PUPPETEER_NO_SANDBOX === '1' ? ['--no-sandbox'] : []
     });
 
     extensionId = await getExtensionId(browser);
@@ -27,7 +31,7 @@ afterEach(async () => {
         await browser.close();
     }
     browser = undefined;
-});
+}, 30000);
 
 // --- The Test Case ---
 test('popup renders correctly', async () => {
