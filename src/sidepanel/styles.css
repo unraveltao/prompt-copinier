@@ -1342,9 +1342,9 @@ footer.footer {
     border-top-color: rgba(255,255,255,0.08);
   }
 
-  /* Headings adopt primary colour for contrast */
+  /* Headings use a lighter blue to keep small heading text readable */
   h2, h3 {
-    color: #3674B5;
+    color: #8AB4E2;
   }
 
   /* Input & textarea fields — exclude in-page-style prompt form fields */
@@ -1463,7 +1463,7 @@ footer.footer {
   /* Main action buttons */
   button.main {
     background-color: var(--primary);
-    color: #E2E8F0;
+    color: #FFFFFF;
   }
   button.main:hover {
     background-color: #434C5E;
@@ -1844,6 +1844,11 @@ button.main:hover {
     background-color: #e2e8f0;
     transform: translateY(-2px);
   }
+}
+
+/* Dark-theme helper text needs enough contrast at its normal 12px size. */
+:root[data-theme="dark"] .pm-subtitle {
+  color: #A0AEC0;
 }
 
 /* Scrollbar colour */
@@ -2459,4 +2464,20 @@ body.settings-page .shortcut-container p {
   body.settings-page .opd-handle-card-icon {
     background: rgba(54, 116, 181, 0.2);
   }
+}
+
+/* Keep keyboard focus visible against both theme palettes. */
+:root[data-theme="light"] body :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #1A365D;
+  outline-offset: 2px;
+}
+
+:root[data-theme="dark"] body :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #90CDF4;
+  outline-offset: 2px;
+}
+
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3 {
+  color: #8AB4E2;
 }
